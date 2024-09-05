@@ -1,4 +1,4 @@
-# AT91SAMA5D27
+# AT91SAMA5D21 Gaming Board
 
 These are config files and steps to run buildroot/Linux on my custom SAMA5D27C board.
 What works for me:
