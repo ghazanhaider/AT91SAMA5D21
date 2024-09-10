@@ -1,32 +1,33 @@
 # AT91SAMA5D21 Gaming Board
 
-These are config files and steps to run buildroot/Linux on my custom SAMA5D27C board.
+These are config files and steps to run buildroot/Linux on my custom SAMA5D21C board.
 What works for me:
 - A DDR3L memory chip that is run at DLL-off specs (124MHz bus speed) and 166MHz bus
 - HDLCD with backlight (LCDPWM work in progress)
 - USB Gadget with ACM+ECM (I can connect to console AND get Internet through my desktop)
 - NAND + PMECC ECC and UBI/UBIFS without errors
 - JTAG OR SWD + Vcom UART through the MIPI connector (requires J-Link with VCom)
-- Latest Linux kernel, latest buildroot
+- Linux works at 5.15.166/6.1.109/6.10.4-6.10.9 tested
+  - Linux kernel 4.19.321 works after re-enabling NAND and LCD drivers and dtb rebuild. LCD still doesnt work, maybe devicetree changed
+  - Linux kerne 3.19.85
 - Passes memtester/fio/dmatest benchmarks on multiple boards
 
 Whats broken:
-- LCD has Blue and Red swapped
-- UARTs are not electrically isolated, sam-ba writes sometime fails with UARTS connected to FTDI host
+- SAM-BA write to NAND fails occasionally unless board is isolated from surfaces. NAND has no failures through stress tests in Linux etc so it might be how the IO is driven in SAM-BA. Bootstrap, UBOOT and Linux all drive Io at medium IO strength without issues
 
 
 ## Individual config files
 br_config                           : Buildroot .config file
-linux_config                        : The Linux kernel .config file. Last tested under 6.10.5
-linux-linux4microchip-2024.04.patch : Patch that forces JEDEC mode1 speeds for my NAND chip. Last tested 6.10.5
+linux_config                        : The Linux kernel .config file. Last tested under 6.10.5-6.10.8
+linux-linux4microchip-2024.04.patch : Patch that forces JEDEC mode1 speeds for my NAND chip. Last tested 6.10.5-6.10.8
 uboot_config                        : UBoot config
 uboot.dts                           : The embedded dts for UBoot for my board. It should eventually be merged with Linux's dts
 at91bootstrap3_config               : AT91Bootstrap .config file that works with the patch below applied
-at91bootstrap3-v4.0.9.patch         : This patch enables our DDR3L RAM chip and extra bus speed options
-ghazan-sama5d27.dts                 : Devicetree that works for my board
+at91patch         		    : This patch dir enables our DDR3L RAM chip and extra bus speed options
+ghazan-sama5d21.dts                 : Devicetree that works for my board
 bluetooth-dbus.conf                 : This DBus config file enables Bluetooth for my ASUS BT 400 USB dongle
 gadget.sh                           : The old USB gadget script, I no longer use it
-rcS                                 : My init script that goes into /etc/init.d/
+fs_overlay                          : Overlaid after filesystem is built. Includes /etc/init.d/ files, inittab, extra bins
 
 
 ## Steps to build
@@ -34,15 +35,12 @@ rcS                                 : My init script that goes into /etc/init.d/
 (I will improve on these with proper defconfigs)
 
 - Git clone buildroot
-- Do any initial config `make O=/sama5d2 nconfig` and save
-- Overwrite the resulting .config file under /sama5d2 with br_config
-- `make O=/sama5d2 at91bootstrap3-menuconfig` and save
-- Patch the files with patch-TODO if you're also using D2516ECMDXGJD-U DDR3 memory. Else use the patched lines as a template to add your own memory if it is not in the golden list.
-- `make O=/sama5d2 uboot-nconfig` and save
-- Overwrite its .config with uboot_config
-- Do the same with Linux
-- Copy rcS to /etc/init.d, and inittab to /etc/inittab. This enables the USB gadget devices and login through it.
-- `make O=/sama5d2 all`
+- Make a folder `mkdir /sama5d2`.
+- Copy the buildroot config there: `cp AT91SAMA5D21/br_config /sama5d2/.config`
+- Do any initial config change if you need to `make O=/sama5d2 nconfig` and save
+- Build the toolchain first: `make O=/sama5d2 toolchain`
+- Build everything else: `make O=/sama5d2 all`
+- <Some errors here are fixed, read next block>
 - Copy over boot.bin, ghazan-sama5d21.dtb, rootfs.ubi, u-boot.bin, uImage to a machine with sam-ba 3.8 installed
 - Connect a usb-c cable to USB-A port with the BOOT jumper off. Put on the jumper once power light is on
 - Sam-ba commands that worked for me, please adjust your directories:
@@ -50,16 +48,69 @@ rcS                                 : My init script that goes into /etc/init.d/
 ./sam-ba_v3.8/sam-ba -p serial -d sama5d2:4:1 -a nandflash:1:8:0xC2605007 -c erase::
 ./sam-ba_v3.8/sam-ba -p serial -d sama5d2:4:1 -a nandflash:1:8:0xC2605007 -c writeboot:boot.bin
 ./sam-ba_v3.8/sam-ba -p serial -d sama5d2:4:1 -a nandflash:1:8:0xC2605007 -c write:u-boot.bin:0x80000
-./sam-ba_v3.8/sam-ba -p serial -d sama5d2:4:1 -a nandflash:1:8:0xC2605007 -c write:ghazan-sama5d27.dtb:0x180000
+./sam-ba_v3.8/sam-ba -p serial -d sama5d2:4:1 -a nandflash:1:8:0xC2605007 -c write:ghazan-sama5d21.dtb:0x180000
 ./sam-ba_v3.8/sam-ba -p serial -d sama5d2:4:1 -a nandflash:1:8:0xC2605007 -c write:uImage:0x1c0000
 ./sam-ba_v3.8/sam-ba -p serial -d sama5d2:4:1 -a nandflash:1:8:0xC2605007 -c write:rootfs.ubi:0x800000
 ```
 - Connect a serial cable to the UART4 pins by the SWD port and open a terminal emulator
 - Press reset to reset the board
 - It SHOULD boot into Linux, the default bootarg works for me.
-- The USB host computer should also see a composite USB device: UART, serial and ETH
+- The USB host computer should also see a composite USB device: UART, storage and ETH. The console is on this UART at baud 115200
 
-## Games
+## Optional
+
+Before building the final image, I also modify these files to make development easier:
+
+- Add this line to inittab to enable login and shell through USB serial:
+```
+echo "ttyGS0::respawn:/sbin/getty -L ttyGS0 115200 linux" >> /etc/inittab
+```
+
+- Allow Root ssh logins:
+```
+sed -i  's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+```
+
+- Rename services to disable them by default under /etc/init.d:
+```
+mv /etc/init.d/S30rpcbind /etc/init.d/K30rpcbind
+mv /etc/init.d/S40bluetoothd /etc/init.d/K40bluetoothd
+mv /etc/init.d/S40xorg /etc/init.d/K40xorg
+mv /etc/init.d/S50nginx /etc/init.d/K50nginx
+mv /etc/init.d/S97squid /etc/init.d/K97squid
+mv /etc/init.d/S99at /etc/init.d/K99at
+mv /etc/init.d/S99iiod /etc/init.d/K99iiod
+mv /etc/init.d/S99input-event-daemon /etc/init.d/K99input-event-daemon
+```
+
+### GCC 14.x incompatible type errors
+
+GCC 14.x throws errors instead of warnings when types do not match, this breaks a few packages.
+Here are two fixes that will show up in this config.
+Once fixed, re-run `make O=/sama5d2 all`
+
+Dillo package diff:
+```
+/sama5d2/build/dillo-3.0.5/dpi/https.c
+
+482c482
+<          if ((cn = strstr((const char *)X509_get_subject_name(remote_cert), "/CN=")) == NULL) {
+---
+>          if ((cn = strstr(X509_get_subject_name(remote_cert), "/CN=")) == NULL) {
+```
+
+Prboom package diff:
+```
+/sama5d2/build/prboom-2.5.0/src/SDL/i_main.c
+
+359c359
+<   myargv = (const char * const*) argv;
+---
+>   myargv = argv;
+```
+
+
+## Games and external packages
 
 To enable prboom, change line 359 of file /sama5d2/build/prboom-2.5.0/src/SDL/i_main.c
 from:
@@ -68,7 +119,8 @@ to:
 `myargv = (const char * const*) argv;`
 .. and recompile (re-run make)
 
-To compile DGEN, pygame modules and other external packages, run `/sama5d2/host/environment-setup` and then compile the external package. Install binaries back into /sama5d2/target/usr/bin/
+
+To compile picodrive/dgen, pygame modules and other external packages, run `source /sama5d2/host/environment-setup` and then compile the external package. Install binaries back into /sama5d2/target/usr/bin/, or fs_overlay in this git repo
 
 
 ## Gadget fun
