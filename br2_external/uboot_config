@@ -373,10 +373,10 @@ CONFIG_BOOTDELAY=3
 #
 # CONFIG_IMAGE_PRE_LOAD is not set
 CONFIG_USE_BOOTARGS=y
-CONFIG_BOOTARGS="console=ttyS1,115200 earlycon rootfstype=ubifs root=ubi0:rootfs ubi.mtd=5 atmel-nand-controller.avoiddma=1"
+CONFIG_BOOTARGS="console=ttyS0,115200 rootfstype=ubifs root=ubi0:rootfs ubi.mtd=5 video=Unknown-1:480x272-16"
 # CONFIG_BOOTARGS_SUBST is not set
 CONFIG_USE_BOOTCOMMAND=y
-CONFIG_BOOTCOMMAND="mtd read nand0 0x22000000 0x200000 0x600000 ; mtd read nand0 0x21000000 0x180000 0xc000 ; bootm 0x22000000 - 0x21000000"
+CONFIG_BOOTCOMMAND="mtd read nand0 0x22000000 0x1c0000 0x640000 ; mtd read nand0 0x21000000 0x180000 0xc000 ; bootm 0x22000000 - 0x21000000"
 # CONFIG_USE_PREBOOT is not set
 CONFIG_DEFAULT_FDT_FILE=""
 # CONFIG_SAVE_PREV_BL_FDT_ADDR is not set
