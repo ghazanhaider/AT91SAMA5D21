@@ -1,1 +1,4 @@
 system=fbdev
+no-vt
+banner
+

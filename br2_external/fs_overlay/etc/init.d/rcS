@@ -9,7 +9,9 @@
 #modprobe u_serial
 #modprobe g_serial
 modprobe g_multi file=/file
-#echo "ttyGS0::respawn:/sbin/getty -L ttyGS0 115200 linux" >> /etc/inittab
+/usr/bin/setfont
+if [ -x /etc/run_once.sh ] ; then /etc/run_once.sh ; fi
+date '2024-10-30 21:00:00'
 
 for i in /etc/init.d/S??* ;do
 

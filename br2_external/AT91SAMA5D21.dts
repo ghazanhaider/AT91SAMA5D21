@@ -273,7 +273,9 @@
 						 <PIN_PD20__GPIO>,
 						 <PIN_PB11__GPIO>,
 						 <PIN_PD18__GPIO>,
-						 <PIN_PB28__GPIO>;
+						 <PIN_PB28__GPIO>,
+						 <PIN_PD13__GPIO>,
+						 <PIN_PD19__GPIO>;
 					bias-pull-up;
 				};
 
@@ -437,40 +439,50 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_key_gpio_default>;
 
-		button-1 {
-			label = "BOTTOM";
+		down {
+			label = "DOWN";
 			gpios = <&pioA PIN_PD21 GPIO_ACTIVE_LOW>;
 			linux,code = <KEY_DOWN>;
 		};
-		button-2 {
+		right {
 			label = "RIGHT";
 			gpios = <&pioA PIN_PD23 GPIO_ACTIVE_LOW>;
 			linux,code = <KEY_RIGHT>;
 		};
-		button-3 {
+		left {
 			label = "LEFT";
 			gpios = <&pioA PIN_PD20 GPIO_ACTIVE_LOW>;
 			linux,code = <KEY_LEFT>;
 		};
-		button-4 {
-			label = "TOP";
+		up {
+			label = "up";
 			gpios = <&pioA PIN_PD11 GPIO_ACTIVE_LOW>;
 			linux,code = <KEY_UP>;
 		};
-		button-5 {
+		z {
 			label = "Z";
 			gpios = <&pioA PIN_PB28 GPIO_ACTIVE_LOW>;
-			linux,code = <KEY_ESC>;
+			linux,code = <KEY_Z>;
 		};
-		button-6 {
+		y {
 			label = "Y";
 			gpios = <&pioA PIN_PD18 GPIO_ACTIVE_LOW>;
-			linux,code = <KEY_TAB>;
+			linux,code = <KEY_C>;
 		};
-		button-7 {
+		x {
 			label = "X";
 			gpios = <&pioA PIN_PB11 GPIO_ACTIVE_LOW>;
-			linux,code = <KEY_SPACE>;
+			linux,code = <KEY_X>;
+		};
+		select {
+			label = "SELECT";
+			gpios = <&pioA PIN_PD13 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_V>;
+		};
+		start {
+			label = "START";
+			gpios = <&pioA PIN_PD19 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_ENTER>;
 		};
 	};
 
