@@ -7,10 +7,14 @@ What works for me:
 - USB Gadget with ACM+ECM (I can connect to console AND get Internet through my desktop)
 - NAND + PMECC ECC and UBI/UBIFS without errors
 - JTAG OR SWD + Vcom UART through the MIPI connector (requires J-Link with VCom)
-- Linux works at 5.15.166/6.1.109/6.10.4-6.10.9 tested
+- Linux works at 5.10, 5.15.166/6.1.109/6.10.4-6.10.9 tested
   - Linux kernel 4.19.321 works after re-enabling NAND and LCD drivers and dtb rebuild. LCD still doesnt work, maybe devicetree changed
-  - Linux kerne 3.19.85
 - Passes memtester/fio/dmatest benchmarks on multiple boards
+
+## Update for V2 board
+- Everything works similar to V1. No hardware errors but flux had to be cleaned on the board for NAND to work
+- Using memory module W632GU6NB11I, it works exactly with the same settings as D1216ECMDXGJD at 166MHz
+
 
 Whats broken:
 - SAM-BA write to NAND fails occasionally unless board is isolated from surfaces. NAND has no failures through stress tests in Linux etc so it might be how the IO is driven in SAM-BA. Bootstrap, UBOOT and Linux all drive Io at medium IO strength without issues
