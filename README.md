@@ -16,9 +16,6 @@ What works for me:
 - Using memory module W632GU6NB11I, it works exactly with the same settings as D1216ECMDXGJD at 166MHz
 
 
-Whats broken:
-- SAM-BA write to NAND fails occasionally unless board is isolated from surfaces. NAND has no failures through stress tests in Linux etc so it might be how the IO is driven in SAM-BA. Bootstrap, UBOOT and Linux all drive Io at medium IO strength without issues
-
 
 ## Individual config files
 br_config                           : Buildroot .config file
@@ -36,58 +33,58 @@ fs_overlay                          : Overlaid after filesystem is built. Includ
 
 ## Steps to build
 
-(I will improve on these with proper defconfigs)
+- Git clone buildroot: `git@github.com:buildroot/buildroot.git`
+- Make an output folder `mkdir /sama5d21`
+- Go into the buildroot folder: `cd buildroot`
+- Setup the output folder for our build: `make BR2_EXTERNAL=/home/user1/AT91SAMA5D21/br2_external O=/sama5d21 AT91SAMA5D21_defconfig`
+- Go into the build folder for the rest of the build: `cd /sama5d21`
+- Optional: Do any initial config change if you need to `make nconfig` and save
+- Build the toolchain first: `make toolchain`
+- Build everything else: `make all`
+- Go into the images folder to find the resulting images: `cd images`
 
-- Git clone buildroot
-- Make a folder `mkdir /sama5d2`.
-- Copy the buildroot config there: `cp AT91SAMA5D21/br_config /sama5d2/.config`
-- Do any initial config change if you need to `make O=/sama5d2 nconfig` and save
-- Build the toolchain first: `make O=/sama5d2 toolchain`
-- Build everything else: `make O=/sama5d2 all`
-- <Some errors here are fixed, read next block>
-- Copy over boot.bin, ghazan-sama5d21.dtb, rootfs.ubi, u-boot.bin, uImage to a machine with sam-ba 3.8 installed
-- Connect a usb-c cable to USB-A port with the BOOT jumper off. Put on the jumper once power light is on
+
+## Steps to image your board
+
+- Download Microchip sam-ba (I used 3.8.0 and 3.8.1) to image the board
+- The Linux version: https://github.com/atmelcorp/sam-ba/releases/download/v3.8.1/sam-ba_v3.8.1-linux_x86_64.tar.gz
+- Connect a usb-c cable to USB-A port with the BOOT button pressed, and then release the button
 - Sam-ba commands that worked for me, please adjust your directories:
 ```
 ./sam-ba_v3.8/sam-ba -p serial -d sama5d2:4:1 -a nandflash:1:8:0xC2605007 -c erase::
 ./sam-ba_v3.8/sam-ba -p serial -d sama5d2:4:1 -a nandflash:1:8:0xC2605007 -c writeboot:boot.bin
 ./sam-ba_v3.8/sam-ba -p serial -d sama5d2:4:1 -a nandflash:1:8:0xC2605007 -c write:u-boot.bin:0x80000
-./sam-ba_v3.8/sam-ba -p serial -d sama5d2:4:1 -a nandflash:1:8:0xC2605007 -c write:ghazan-sama5d21.dtb:0x180000
+./sam-ba_v3.8/sam-ba -p serial -d sama5d2:4:1 -a nandflash:1:8:0xC2605007 -c write:u-boot-env.bin:0x140000
+./sam-ba_v3.8/sam-ba -p serial -d sama5d2:4:1 -a nandflash:1:8:0xC2605007 -c write:ATSAMA5D21.dtb:0x180000
 ./sam-ba_v3.8/sam-ba -p serial -d sama5d2:4:1 -a nandflash:1:8:0xC2605007 -c write:uImage:0x1c0000
-./sam-ba_v3.8/sam-ba -p serial -d sama5d2:4:1 -a nandflash:1:8:0xC2605007 -c write:rootfs.ubi:0x800000
+./sam-ba_v3.8/sam-ba -p serial -d sama5d2:4:1 -a nandflash:1:8:0xC2605007 -c write:rootfs.ubi:0x800000 -L 262144
 ```
-- Connect a serial cable to the UART4 pins by the SWD port and open a terminal emulator
+- Connect a serial cable to the UART0 pins (J10 in V1) by the SWD port and open a terminal emulator
 - Press reset to reset the board
 - It SHOULD boot into Linux, the default bootarg works for me.
 - The USB host computer should also see a composite USB device: UART, storage and ETH. The console is on this UART at baud 115200
 
-## Optional
 
-Before building the final image, I also modify these files to make development easier:
+## Notes
 
-- Add this line to inittab to enable login and shell through USB serial:
-```
-echo "ttyGS0::respawn:/sbin/getty -L ttyGS0 115200 linux" >> /etc/inittab
-```
+There is a file `/etc/run_once.sh` which is run during the first boot only.
+It enables getty login over the USB gadget serial port, disables a few services and runs *picodrive*
 
+- The ethernet device is named `usb0` and no IP config or dhcp is run. If your host has a dhcp server you can run `udhcpc -i usb0 -n` to get an IP
+ 
 - Allow Root ssh logins:
 ```
 sed -i  's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 ```
 
-- Rename services to disable them by default under /etc/init.d:
-```
-mv /etc/init.d/S30rpcbind /etc/init.d/K30rpcbind
-mv /etc/init.d/S40bluetoothd /etc/init.d/K40bluetoothd
-mv /etc/init.d/S40xorg /etc/init.d/K40xorg
-mv /etc/init.d/S50nginx /etc/init.d/K50nginx
-mv /etc/init.d/S97squid /etc/init.d/K97squid
-mv /etc/init.d/S99at /etc/init.d/K99at
-mv /etc/init.d/S99iiod /etc/init.d/K99iiod
-mv /etc/init.d/S99input-event-daemon /etc/init.d/K99input-event-daemon
-```
+- The environment file is already compiled `u-boot-env.bin`. It was compiled using mkenvimage:
+`mkenvimage uboot.env 0x20000 -o u-boot-env.bin`
+Run this command if you need to make a change to the uboot environment in uboot.env
+
 
 ### GCC 14.x incompatible type errors
+
+(Update: I've updated the config to use GCC 13.x to bypass these errors)
 
 GCC 14.x throws errors instead of warnings when types do not match, this breaks a few packages.
 Here are two fixes that will show up in this config.
@@ -127,7 +124,7 @@ to:
 To compile picodrive/dgen, pygame modules and other external packages, run `source /sama5d2/host/environment-setup` and then compile the external package. Install binaries back into /sama5d2/target/usr/bin/, or fs_overlay in this git repo
 
 
-## Gadget fun
+## Gadget fun (Old notes, no longer needed)
 
 To enable USB Gadget serial + ECM Ethernet (works on MACOS without added drivers), follow these steps:
 - Copy over the rcS file to /etc/init.d/rcS
