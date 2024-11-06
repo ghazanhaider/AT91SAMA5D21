@@ -8,7 +8,7 @@
 #echo 1 > /proc/sys/kernel/printk
 #modprobe u_serial
 #modprobe g_serial
-modprobe g_multi file=/file
+modprobe g_multi
 /usr/bin/setfont
 if [ -x /etc/run_once.sh ] ; then /etc/run_once.sh ; fi
 date '2024-10-30 21:00:00'

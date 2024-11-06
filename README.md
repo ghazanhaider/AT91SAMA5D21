@@ -54,7 +54,7 @@ fs_overlay                          : Overlaid after filesystem is built. Includ
 ./sam-ba_v3.8/sam-ba -p serial -d sama5d2:4:1 -a nandflash:1:8:0xC2605007 -c erase::
 ./sam-ba_v3.8/sam-ba -p serial -d sama5d2:4:1 -a nandflash:1:8:0xC2605007 -c writeboot:boot.bin
 ./sam-ba_v3.8/sam-ba -p serial -d sama5d2:4:1 -a nandflash:1:8:0xC2605007 -c write:u-boot.bin:0x80000
-./sam-ba_v3.8/sam-ba -p serial -d sama5d2:4:1 -a nandflash:1:8:0xC2605007 -c write:u-boot-env.bin:0x140000
+./sam-ba_v3.8/sam-ba -p serial -d sama5d2:4:1 -a nandflash:1:8:0xC2605007 -c write:uboot-env.bin:0x140000
 ./sam-ba_v3.8/sam-ba -p serial -d sama5d2:4:1 -a nandflash:1:8:0xC2605007 -c write:ATSAMA5D21.dtb:0x180000
 ./sam-ba_v3.8/sam-ba -p serial -d sama5d2:4:1 -a nandflash:1:8:0xC2605007 -c write:uImage:0x1c0000
 ./sam-ba_v3.8/sam-ba -p serial -d sama5d2:4:1 -a nandflash:1:8:0xC2605007 -c write:rootfs.ubi:0x800000 -L 262144
