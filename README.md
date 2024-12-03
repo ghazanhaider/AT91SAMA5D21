@@ -65,6 +65,15 @@ fs_overlay                          : Overlaid after filesystem is built. Includ
 - The USB host computer should also see a composite USB device: UART, storage and ETH. The console is on this UART at baud 115200
 
 
+## Development
+
+As you modify nconifg, linux-nconfig, uboot-nconfig etc, update them after testing them out:
+
+BR2 Config: `make update-defconfig`
+Linux: `make linux-update-config`
+U-Boot: `uboot-update-config`
+AT91Bootstrap3: `at91bootstrap3-update-config`
+
 ## Notes
 
 There is a file `/etc/run_once.sh` which is run during the first boot only.

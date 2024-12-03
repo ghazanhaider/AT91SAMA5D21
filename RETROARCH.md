@@ -13,5 +13,14 @@ PKG_CONF_PATH=/sama5d21/host/bin/pkg-config ./configure --prefix=/sama5d21/targe
 
 make clean
 make -j4
+
+
+./libretro-build.sh picodrive
+./libretro-build.sh picodrive
+./libretro-build.sh quicknes
+git clone https://github.com/libretro/libretro-super.git
+cd libretro-super
+
+
 DESTDIR=/sama5d21/target/ make install
 ```
