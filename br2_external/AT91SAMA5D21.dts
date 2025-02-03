@@ -472,12 +472,12 @@
 		z {
 			label = "Z";
 			gpios = <&pioA PIN_PB28 GPIO_ACTIVE_LOW>;
-			linux,code = <KEY_Z>;
+			linux,code = <KEY_A>;
 		};
 		y {
 			label = "Y";
 			gpios = <&pioA PIN_PD18 GPIO_ACTIVE_LOW>;
-			linux,code = <KEY_C>;
+			linux,code = <KEY_Z>;
 		};
 		x {
 			label = "X";
