@@ -9,6 +9,7 @@ What works for me:
 - JTAG OR SWD + Vcom UART through the MIPI connector (requires J-Link with VCom)
 - Linux works at 5.10, 5.15.166/6.1.109/6.10.4-6.10.9 tested
   - Linux kernel 4.19.321 works after re-enabling NAND and LCD drivers and dtb rebuild. LCD still doesnt work, maybe devicetree changed
+  - Kernels up to 5.15 work but emulate slightly slower than kernels 6.1+ onwards
 - Passes memtester/fio/dmatest benchmarks on multiple boards
 
 ## Update for V2 board
@@ -34,6 +35,7 @@ fs_overlay                          : Overlaid after filesystem is built. Includ
 ## Steps to build
 
 - Git clone buildroot: `git@github.com:buildroot/buildroot.git`
+- Use branch `2024.11.1`: `git checkout 2024.11.1`
 - Make an output folder `mkdir /sama5d21`
 - Go into the buildroot folder: `cd buildroot`
 - Setup the output folder for our build: `make BR2_EXTERNAL=/home/user1/AT91SAMA5D21/br2_external O=/sama5d21 AT91SAMA5D21_defconfig`
@@ -64,6 +66,13 @@ fs_overlay                          : Overlaid after filesystem is built. Includ
 - It SHOULD boot into Linux, the default bootarg works for me.
 - The USB host computer should also see a composite USB device: UART, storage and ETH. The console is on this UART at baud 115200
 
+
+## Game ROMs
+
+NES and Sega roms are in /root/roms/NES and /root/roms/SEGA
+They were obtained from archive.org
+QuickNES runs best on this chip. Picodrive has been stripped down as much as possible but most games run slightly slowly with cpu at 100%. I'll check other emulators too eventually but for now this is really a NES emulator.
+TODO: Check out PRBoom as a ROM and hopefully a wolf3d port
 
 ## Development
 
